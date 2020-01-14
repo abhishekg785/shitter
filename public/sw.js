@@ -1,4 +1,4 @@
-const version = 15;
+const version = 17;
 
 self.importScripts('https://unpkg.com/idb@4.0.4/build/iife/index-min.js', 'db.js');
 
@@ -22,6 +22,12 @@ self.addEventListener('fetch', async (event) => {
             handleSameDomainRequest(event.request)
         )
     }
+
+    if (requestUrl.hostname === 'unpkg.com') {
+        event.respondWith(
+            handleAssets(event.request)
+        )
+    }
 });
 
 async function precache() {
@@ -35,6 +41,7 @@ async function precache() {
         '/manifest.json',
         '/icons/icon_512.png',
         '/db.js',
+        'https://unpkg.com/idb@4.0.4/build/iife/index-min.js',
     ]);
     console.log('sw:precache: static assets cached successfully');
 }
@@ -148,6 +155,8 @@ async function syncTweets() {
             })
         )
     } catch (err) {
+        console.log('sw: syncTweets: error occurred while syncing tweets', err);
 
+        return Promise.reject();
     }
 }

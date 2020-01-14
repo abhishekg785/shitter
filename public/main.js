@@ -34,6 +34,9 @@
                     navigator.serviceWorker.ready.then(async reg => {
                         await putTweet({ ...formattedTweet, sync: false }, formattedTweet.id);
                         await reg.sync.register('post-tweet');
+
+                        appendTweetsToPage([ formattedTweet ]);
+                        clearTweetForm();
                     });
                 }
             }
