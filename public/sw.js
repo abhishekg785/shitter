@@ -1,4 +1,4 @@
-const version = 10;
+const version = 12;
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -32,6 +32,7 @@ async function precache() {
         '/offline',
         '/manifest.json',
         '/icons/icon_512.png',
+        '/db.js',
     ]);
     console.log('sw:precache: static assets cached successfully');
 }
