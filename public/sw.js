@@ -1,4 +1,4 @@
-const version = 9;
+const version = 10;
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -111,3 +111,9 @@ async function handleAssets(request) {
         return new Response('no-match');
     }
 }
+
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'post-tweet') {
+        console.log('syncing tweet');
+    }
+});

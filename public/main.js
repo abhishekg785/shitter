@@ -30,6 +30,12 @@
                 appendTweetsToPage([ formattedTweet ])
             } catch (err) {
                 console.log('[main.js]: error ocurred while posting the tweet', err);
+
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.sync.register('post-tweet');
+                    });
+                }
             }
         });
 
