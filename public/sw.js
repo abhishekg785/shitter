@@ -30,6 +30,8 @@ async function precache() {
         '/',
         '/main.js',
         '/offline',
+        '/manifest.json',
+        '/icons/icon_512.png',
     ]);
     console.log('sw:precache: static assets cached successfully');
 }
