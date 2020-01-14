@@ -1,4 +1,6 @@
-const version = 12;
+const version = 15;
+
+self.importScripts('https://unpkg.com/idb@4.0.4/build/iife/index-min.js', 'db.js');
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -115,6 +117,37 @@ async function handleAssets(request) {
 
 self.addEventListener('sync', (event) => {
     if (event.tag === 'post-tweet') {
-        console.log('syncing tweet');
+        event.waitUntil(
+            syncTweets()
+        )
     }
 });
+
+// get all the unsync tweets from indexdb
+// post them to server
+async function syncTweets() {
+    try {
+        const tweets = await getAllTweets();
+
+        const unsyncTweets = tweets.filter(tweet => !tweet.sync);
+        console.log('sw: syncTweets: tweets to sync', unsyncTweets);
+
+        await Promise.all(
+            unsyncTweets.map(tweet => {
+                return fetch('/tweets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(tweet),
+                }).then(() => {
+                    console.log('sw: syncTweets: tweet has been posted', tweet);
+                    return putTweet({ ...tweet, sync: true }, tweet.id);
+                })
+            })
+        )
+    } catch (err) {
+
+    }
+}
