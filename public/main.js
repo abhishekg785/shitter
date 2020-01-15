@@ -9,10 +9,9 @@
         tweetForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
+            const tweetText = tweetInput.value;
+            const formattedTweet = formatTweet(tweetText);
             try {
-                const tweetText = tweetInput.value;
-                const formattedTweet = formatTweet(tweetText);
-
                 const options = {
                     headers: {
                         'Accept': 'application/json',
@@ -30,6 +29,16 @@
                 appendTweetsToPage([ formattedTweet ])
             } catch (err) {
                 console.log('[main.js]: error ocurred while posting the tweet', err);
+
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(async reg => {
+                        await putTweet({ ...formattedTweet, sync: false }, formattedTweet.id);
+                        await reg.sync.register('post-tweet');
+
+                        appendTweetsToPage([ formattedTweet ]);
+                        clearTweetForm();
+                    });
+                }
             }
         });
 

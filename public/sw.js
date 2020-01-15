@@ -1,4 +1,6 @@
-const version = 9;
+const version = 17;
+
+self.importScripts('https://unpkg.com/idb@4.0.4/build/iife/index-min.js', 'db.js');
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -20,6 +22,12 @@ self.addEventListener('fetch', async (event) => {
             handleSameDomainRequest(event.request)
         )
     }
+
+    if (requestUrl.hostname === 'unpkg.com') {
+        event.respondWith(
+            handleAssets(event.request)
+        )
+    }
 });
 
 async function precache() {
@@ -32,6 +40,8 @@ async function precache() {
         '/offline',
         '/manifest.json',
         '/icons/icon_512.png',
+        '/db.js',
+        'https://unpkg.com/idb@4.0.4/build/iife/index-min.js',
     ]);
     console.log('sw:precache: static assets cached successfully');
 }
@@ -109,5 +119,44 @@ async function handleAssets(request) {
         console.log('sw:handleAssets: no data found in cache for', request.url);
 
         return new Response('no-match');
+    }
+}
+
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'post-tweet') {
+        event.waitUntil(
+            syncTweets()
+        )
+    }
+});
+
+// get all the unsync tweets from indexdb
+// post them to server
+async function syncTweets() {
+    try {
+        const tweets = await getAllTweets();
+
+        const unsyncTweets = tweets.filter(tweet => !tweet.sync);
+        console.log('sw: syncTweets: tweets to sync', unsyncTweets);
+
+        await Promise.all(
+            unsyncTweets.map(tweet => {
+                return fetch('/tweets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(tweet),
+                }).then(() => {
+                    console.log('sw: syncTweets: tweet has been posted', tweet);
+                    return putTweet({ ...tweet, sync: true }, tweet.id);
+                })
+            })
+        )
+    } catch (err) {
+        console.log('sw: syncTweets: error occurred while syncing tweets', err);
+
+        return Promise.reject();
     }
 }
